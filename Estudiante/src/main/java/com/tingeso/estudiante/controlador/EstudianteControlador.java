@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -53,4 +55,15 @@ public class EstudianteControlador {
         estudianteService.eliminarEstudiante(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/tipoColegioProcedencia")
+    public ResponseEntity<Integer> obtenerTipoColegioProcedenciaPorRut(@RequestParam String rut) {
+        Optional<Estudiante> estudiante = estudianteService.obtenerEstudiantePorRut(rut);
+        if (estudiante != null) {
+            return ResponseEntity.ok(estudiante.getTipoColegioProcedencia());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }

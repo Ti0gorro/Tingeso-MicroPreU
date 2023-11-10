@@ -4,6 +4,7 @@ import com.tingeso.cuota.model.Cuota;
 import com.tingeso.cuota.repository.CuotaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -15,10 +16,13 @@ public class CuotaService {
 
     @Autowired
     private CuotaRepository cuotaRepository;
+    @Autowired
+    private RestTemplate restTemplate;
 
     public List<Cuota> obtenerCuotasPorRut(String rutEstudiante) {
         return cuotaRepository.findByRutEstudiante(rutEstudiante);
     }
+
     public Cuota registrarPagoCuota(Long idCuota) {
         Cuota cuota = cuotaRepository.findById(idCuota)
                 .orElseThrow(() -> new IllegalArgumentException("Cuota no encontrada"));
@@ -34,16 +38,23 @@ public class CuotaService {
         int tipoColegioProcedencia = obtenerTipoColegioProcedencia(rutEstudiante);
         double montoMatricula = 70000;
         double montoArancel = 1500000;
-        double descuentoPorTipoColegio = obtenerDescuentoPorTipoColegio(tipoColegioProcedencia);
-        double descuentoPorPagoContado = numeroCuotasSolicitadas == 1 ? 0.5 : 0;
-        double montoFinalArancel = montoArancel - (montoArancel * descuentoPorTipoColegio) - (montoArancel * descuentoPorPagoContado);
+        double montoFinalArancel;
+
+        if (numeroCuotasSolicitadas == 1) {
+            montoFinalArancel = montoArancel * 0.5;
+        } else {
+            double descuentoPorTipoColegio = obtenerDescuentoPorTipoColegio(tipoColegioProcedencia);
+            montoFinalArancel = montoArancel * (1 - descuentoPorTipoColegio);
+
         int numeroMaxCuotas = obtenerNumeroMaxCuotasPorTipoColegio(tipoColegioProcedencia);
-        int numeroCuotas = Math.min(numeroCuotasSolicitadas, numeroMaxCuotas);
+        int numeroCuotas = numeroCuotasSolicitadas > 1 ? Math.min(numeroCuotasSolicitadas, numeroMaxCuotas) : 1;
         double montoCuota = montoFinalArancel / numeroCuotas;
+
         List<Cuota> cuotasGeneradas = new ArrayList<>();
         LocalDate fechaActual = LocalDate.now();
         Date fechaVencimientoMatricula = Date.valueOf(fechaActual);
         Date fechaVencimientoArancel = Date.valueOf(fechaActual.plusMonths(1).withDayOfMonth(10));
+
         Cuota cuotaMatricula = new Cuota();
         cuotaMatricula.setRutEstudiante(rutEstudiante);
         cuotaMatricula.setNumeroDeCuota(0);
@@ -51,6 +62,7 @@ public class CuotaService {
         cuotaMatricula.setFechaDeVencimiento(fechaVencimientoMatricula);
         cuotaMatricula.setEstado(Cuota.EstadoCuota.PENDIENTE);
         cuotasGeneradas.add(cuotaMatricula);
+
         for (int i = 1; i <= numeroCuotas; i++) {
             Cuota cuota = new Cuota();
             cuota.setRutEstudiante(rutEstudiante);
@@ -59,29 +71,32 @@ public class CuotaService {
             cuota.setFechaDeVencimiento(fechaVencimientoArancel);
             cuota.setEstado(Cuota.EstadoCuota.PENDIENTE);
             cuotasGeneradas.add(cuota);
+
             fechaVencimientoArancel = Date.valueOf(fechaVencimientoArancel.toLocalDate().plusMonths(1).withDayOfMonth(10));
         }
 
         return cuotaRepository.saveAll(cuotasGeneradas);
     }
+
     private int obtenerTipoColegioProcedencia(String rutEstudiante) {
         // TERMINAR
         return 1;
     }
+
     private double obtenerDescuentoPorTipoColegio(int tipoColegio) {
         switch (tipoColegio) {
-            case 1: return 0.20;
-            case 2: return 0.10;
-            case 3: return 0.0;
-            default: return 0.0;
+            case 1: return 0.20; 
+            case 2: return 0.10; 
+            case 3: return 0.0;  
         }
     }
+
     private int obtenerNumeroMaxCuotasPorTipoColegio(int tipoColegio) {
         switch (tipoColegio) {
-            case 1: return 10;
-            case 2: return 7;
-            case 3: return 4;
-            default: return 0;
+            case 1: return 10; 
+            case 2: return 7;  
+            case 3: return 4;  
+            default: return 0; 
         }
     }
 

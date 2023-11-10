@@ -34,4 +34,7 @@ public class EstudianteServicio {
         return estudianteRepositorio.existsById(id);
     }
 
+    public Optional<Estudiante> obtenerEstudiantePorRut(String rut) {
+        return estudianteRepositorio.findByRut(rut);
+    }
 }

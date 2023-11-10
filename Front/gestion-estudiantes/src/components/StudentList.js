@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import CuotasManager from './CuotasManager'; 
 
 const StudentList = ({ setShowForm }) => {
   const [students, setStudents] = useState([]);
@@ -29,6 +30,7 @@ const StudentList = ({ setShowForm }) => {
             <tr>
               <th style={thStyle}>RUT</th>
               <th style={thStyle}>Nombre Estudiante</th>
+              <th style={thStyle}>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -36,6 +38,9 @@ const StudentList = ({ setShowForm }) => {
               <tr key={student.rut} style={trStyle}>
                 <td style={tdStyle}>{student.rut}</td>
                 <td style={tdStyle}>{`${student.nombres} ${student.apellidos}`}</td>
+                <td style={tdStyle}>
+                  <CuotasManager rutEstudiante={student.rut} tipoColegio={Number(student.tipoColegioProcedencia)} />
+                </td>
               </tr>
             ))}
           </tbody>
