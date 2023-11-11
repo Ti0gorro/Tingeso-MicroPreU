@@ -56,14 +56,17 @@ public class EstudianteControlador {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/tipoColegioProcedencia")
-    public ResponseEntity<Integer> obtenerTipoColegioProcedenciaPorRut(@RequestParam String rut) {
-        Optional<Estudiante> estudiante = estudianteService.obtenerEstudiantePorRut(rut);
-        if (estudiante != null) {
-            return ResponseEntity.ok(estudiante.getTipoColegioProcedencia());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    @GetMapping("/tipoColegio/{rut}")
+    public ResponseEntity<Integer> obtenerTipoColegioProcedencia(@PathVariable String rut) {
+        return estudianteService.obtenerTipoColegioProcedenciaPorRut(rut)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+    @GetMapping("/anosEgreso/{rut}")
+    public ResponseEntity<Integer> obtenerAnosDesdeEgreso(@PathVariable String rut) {
+        return estudianteService.obtenerAnosDesdeEgreso(rut)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 }

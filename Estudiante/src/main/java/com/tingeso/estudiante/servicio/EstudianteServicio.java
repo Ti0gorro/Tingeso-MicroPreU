@@ -5,6 +5,7 @@ import com.tingeso.estudiante.repositorio.EstudianteRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Year;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +35,19 @@ public class EstudianteServicio {
         return estudianteRepositorio.existsById(id);
     }
 
+    public Optional<Integer> obtenerTipoColegioProcedenciaPorRut(String rut) {
+        return estudianteRepositorio.findByRut(rut)
+                .map(Estudiante::getTipoColegioProcedencia);
+    }
     public Optional<Estudiante> obtenerEstudiantePorRut(String rut) {
         return estudianteRepositorio.findByRut(rut);
+    }
+    public Optional<Integer> obtenerAnosDesdeEgreso(String rut) {
+        return obtenerEstudiantePorRut(rut)
+                .map(estudiante -> {
+                    int anoEgreso = estudiante.getAnoEgreso();
+                    int anoActual = Year.now().getValue();
+                    return anoActual - anoEgreso;
+                });
     }
 }

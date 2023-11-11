@@ -39,5 +39,8 @@ public class Estudiante {
     @Column(nullable = false)
     private int anoEgresoColegio;
 
+    public int getAnoEgreso() {
+        return anoEgresoColegio;
+    }
 }
 

@@ -3,6 +3,7 @@ package com.tingeso.cuota.service;
 import com.tingeso.cuota.model.Cuota;
 import com.tingeso.cuota.repository.CuotaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -34,8 +35,59 @@ public class CuotaService {
         }
     }
 
+    public int obtenerTipoColegioProcedencia(String rutEstudiante) {
+        String url = "http://localhost:8080/api/estudiantes/tipoColegio/" + rutEstudiante;
+        try {
+            ResponseEntity<Integer> response = restTemplate.getForEntity(url, Integer.class);
+            return response.getBody();
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    private double obtenerDescuentoPorTipoColegio(int tipoColegio) {
+        switch (tipoColegio) {
+            case 1: return 0.20;
+            case 2: return 0.10;
+            case 3: return 0.0;
+        }
+        return 0;
+    }
+
+    private int obtenerNumeroMaxCuotasPorTipoColegio(int tipoColegio) {
+        switch (tipoColegio) {
+            case 1: return 10;
+            case 2: return 7;
+            case 3: return 4;
+            default: return 0;
+        }
+    }
+
+    private double obtenerDescuentoPorAnosEgreso(int anosDesdeEgreso) {
+        if (anosDesdeEgreso < 1) {
+            return 0.15;
+        } else if (anosDesdeEgreso <= 2) {
+            return 0.08;
+        } else if (anosDesdeEgreso <= 4) {
+            return 0.04;
+        } else {
+            return 0.0;
+        }
+    }
+    private int obtenerAnosDesdeEgreso(String rutEstudiante) {
+        String url = "http://localhost:8080/api/estudiantes/anosEgreso/" + rutEstudiante;
+        try {
+            ResponseEntity<Integer> response = restTemplate.getForEntity(url, Integer.class);
+            return response.getBody() != null ? response.getBody() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
     public List<Cuota> generarCuotas(String rutEstudiante, int numeroCuotasSolicitadas) {
         int tipoColegioProcedencia = obtenerTipoColegioProcedencia(rutEstudiante);
+        int anosDesdeEgreso = obtenerAnosDesdeEgreso(rutEstudiante);
+        double descuentoPorEgreso = obtenerDescuentoPorAnosEgreso(anosDesdeEgreso);
+
         double montoMatricula = 70000;
         double montoArancel = 1500000;
         double montoFinalArancel;
@@ -44,11 +96,12 @@ public class CuotaService {
             montoFinalArancel = montoArancel * 0.5;
         } else {
             double descuentoPorTipoColegio = obtenerDescuentoPorTipoColegio(tipoColegioProcedencia);
-            montoFinalArancel = montoArancel * (1 - descuentoPorTipoColegio);
+            montoFinalArancel = montoArancel * (1 - descuentoPorTipoColegio - descuentoPorEgreso);
+        }
 
         int numeroMaxCuotas = obtenerNumeroMaxCuotasPorTipoColegio(tipoColegioProcedencia);
         int numeroCuotas = numeroCuotasSolicitadas > 1 ? Math.min(numeroCuotasSolicitadas, numeroMaxCuotas) : 1;
-        double montoCuota = montoFinalArancel / numeroCuotas;
+        double montoCuota = Math.round(montoFinalArancel / numeroCuotas);
 
         List<Cuota> cuotasGeneradas = new ArrayList<>();
         LocalDate fechaActual = LocalDate.now();
@@ -71,33 +124,9 @@ public class CuotaService {
             cuota.setFechaDeVencimiento(fechaVencimientoArancel);
             cuota.setEstado(Cuota.EstadoCuota.PENDIENTE);
             cuotasGeneradas.add(cuota);
-
             fechaVencimientoArancel = Date.valueOf(fechaVencimientoArancel.toLocalDate().plusMonths(1).withDayOfMonth(10));
         }
 
         return cuotaRepository.saveAll(cuotasGeneradas);
     }
-
-    private int obtenerTipoColegioProcedencia(String rutEstudiante) {
-        // TERMINAR
-        return 1;
-    }
-
-    private double obtenerDescuentoPorTipoColegio(int tipoColegio) {
-        switch (tipoColegio) {
-            case 1: return 0.20; 
-            case 2: return 0.10; 
-            case 3: return 0.0;  
-        }
-    }
-
-    private int obtenerNumeroMaxCuotasPorTipoColegio(int tipoColegio) {
-        switch (tipoColegio) {
-            case 1: return 10; 
-            case 2: return 7;  
-            case 3: return 4;  
-            default: return 0; 
-        }
-    }
-
 }
