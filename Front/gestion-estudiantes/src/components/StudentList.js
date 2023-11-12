@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CuotasManager from './CuotasManager'; 
+import CsvUploader from './CsvUploader';
 
 const StudentList = ({ setShowForm }) => {
   const [students, setStudents] = useState([]);
+  const [showCsvUploader, setShowCsvUploader] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -18,10 +21,21 @@ const StudentList = ({ setShowForm }) => {
     fetchStudents();
   }, []);
 
+  const handleUploadResult = (success, message) => {
+    setShowCsvUploader(false);
+    setUploadResult({ success, message });
+    setTimeout(() => setUploadResult(null), 3000);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <h2>Listado de Estudiantes</h2>
-      <button onClick={() => setShowForm(true)} style={btnStyle}>Nuevo Estudiante</button>
+      <div>
+        <button onClick={() => setShowForm(true)} style={btnStyle}>Nuevo Estudiante</button>
+        <button onClick={() => setShowCsvUploader(!showCsvUploader)} style={btnStyle}>Importar Exámenes</button>
+      </div>
+      {showCsvUploader && <CsvUploader onUploadResult={handleUploadResult} />}
+      {uploadResult && <div style={popupStyle}>{uploadResult.message}</div>}
       {students.length === 0 ? (
         <p>No hay estudiantes registrados.</p>
       ) : (
@@ -59,6 +73,13 @@ const btnStyle = {
   cursor: 'pointer',
   marginBottom: '20px',
   fontSize: '16px',
+};
+
+const popupStyle = {
+  backgroundColor: 'lightgreen',
+  padding: '10px',
+  margin: '10px 0',
+  borderRadius: '5px'
 };
 
 const tableStyle = {

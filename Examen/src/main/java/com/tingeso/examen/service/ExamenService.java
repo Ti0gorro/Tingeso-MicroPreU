@@ -23,7 +23,6 @@ public class ExamenService {
         if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(".csv")) {
             throw new Exception("Formato de archivo no válido. Por favor, suba un archivo CSV.");
         }
-
         try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             List<Examen> examenes = new ArrayList<>();
             String line;

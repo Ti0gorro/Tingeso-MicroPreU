@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/examenes")
+@CrossOrigin(origins = "http://localhost:3000")
 public class ExamenController {
 
     @Autowired
