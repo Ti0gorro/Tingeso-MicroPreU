@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Date;
 import java.util.List;
 
 @RestController
@@ -47,5 +48,48 @@ public class CuotaController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @GetMapping("/montoTotalArancel/{rutEstudiante}")
+    public ResponseEntity<Double> obtenerMontoTotalArancel(@PathVariable String rutEstudiante) {
+        double montoTotalArancel = cuotaService.calcularMontoTotalArancel(rutEstudiante) - 70000;
+        return ResponseEntity.ok(montoTotalArancel);
+    }
 
+    @GetMapping("/tipoPago/{rutEstudiante}")
+    public ResponseEntity<String> obtenerTipoPago(@PathVariable String rutEstudiante) {
+        String tipoPago = cuotaService.determinarTipoPago(rutEstudiante);
+        return ResponseEntity.ok(tipoPago);
+    }
+
+    @GetMapping("/totalCuotasPactadas/{rutEstudiante}")
+    public int obtenerTotalCuotasPactadas(@PathVariable String rutEstudiante) {
+        return cuotaService.obtenerTotalCuotasPactadas(rutEstudiante);
+    }
+
+    @GetMapping("/cuotasPagadas/{rutEstudiante}")
+    public int obtenerCuotasPagadas(@PathVariable String rutEstudiante) {
+        return cuotaService.obtenerCuotasPagadas(rutEstudiante);
+    }
+    @GetMapping("/montoTotalPagado/{rutEstudiante}")
+    public double obtenerMontoTotalPagado(@PathVariable String rutEstudiante) {
+        return cuotaService.obtenerMontoTotalPagado(rutEstudiante);
+    }
+    @GetMapping("/saldoPorPagar/{rutEstudiante}")
+    public ResponseEntity<Double> obtenerSaldoPorPagar(@PathVariable String rutEstudiante) {
+        double saldoPorPagar = cuotaService.calcularMontoTotalArancel(rutEstudiante) - 70000 - cuotaService.obtenerMontoTotalPagado(rutEstudiante);
+        return ResponseEntity.ok(saldoPorPagar);
+    }
+    @GetMapping("/cuotasConRetraso/{rutEstudiante}")
+    public ResponseEntity<Integer> obtenerCuotasConRetraso(@PathVariable String rutEstudiante) {
+        int cuotasConRetraso = cuotaService.obtenerCuotasConRetraso(rutEstudiante);
+        return ResponseEntity.ok(cuotasConRetraso);
+    }
+    @GetMapping("/fechaUltimoPago/{rutEstudiante}")
+    public ResponseEntity<Date> obtenerFechaUltimoPago(@PathVariable String rutEstudiante) {
+        Date fechaUltimoPago = cuotaService.obtenerFechaUltimoPago(rutEstudiante);
+        if (fechaUltimoPago != null) {
+            return ResponseEntity.ok(fechaUltimoPago);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

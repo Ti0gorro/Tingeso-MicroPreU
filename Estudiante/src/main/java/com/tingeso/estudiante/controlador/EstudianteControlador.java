@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
@@ -66,6 +65,13 @@ public class EstudianteControlador {
     public ResponseEntity<Integer> obtenerAnosDesdeEgreso(@PathVariable String rut) {
         return estudianteService.obtenerAnosDesdeEgreso(rut)
                 .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/nombreCompleto/{rut}")
+    public ResponseEntity<String> obtenerNombreCompletoEstudiantePorRut(@PathVariable String rut) {
+        return estudianteService.obtenerEstudiantePorRut(rut)
+                .map(estudiante -> ResponseEntity.ok(estudiante.getNombres() + " " + estudiante.getApellidos()))
                 .orElse(ResponseEntity.notFound().build());
     }
 

@@ -10,7 +10,9 @@ import org.springframework.web.client.RestTemplate;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CuotaService {
@@ -29,6 +31,7 @@ public class CuotaService {
                 .orElseThrow(() -> new IllegalArgumentException("Cuota no encontrada"));
         if (cuota.getEstado().equals(Cuota.EstadoCuota.PENDIENTE) || cuota.getEstado().equals(Cuota.EstadoCuota.VENCIDA)) {
             cuota.setEstado(Cuota.EstadoCuota.PAGADA);
+            cuota.setFechaDePago(Date.valueOf(LocalDate.now()));
             return cuotaRepository.save(cuota);
         } else {
             throw new IllegalStateException("La cuota ya está pagada o en estado no apto para pago.");
@@ -44,7 +47,6 @@ public class CuotaService {
             return -1;
         }
     }
-
     private double obtenerDescuentoPorTipoColegio(int tipoColegio) {
         switch (tipoColegio) {
             case 1: return 0.20;
@@ -53,7 +55,6 @@ public class CuotaService {
         }
         return 0;
     }
-
     private int obtenerNumeroMaxCuotasPorTipoColegio(int tipoColegio) {
         switch (tipoColegio) {
             case 1: return 10;
@@ -62,7 +63,6 @@ public class CuotaService {
             default: return 0;
         }
     }
-
     private double obtenerDescuentoPorAnosEgreso(int anosDesdeEgreso) {
         if (anosDesdeEgreso < 1) {
             return 0.15;
@@ -98,7 +98,6 @@ public class CuotaService {
             double descuentoPorTipoColegio = obtenerDescuentoPorTipoColegio(tipoColegioProcedencia);
             montoFinalArancel = montoArancel * (1 - descuentoPorTipoColegio - descuentoPorEgreso);
         }
-
         int numeroMaxCuotas = obtenerNumeroMaxCuotasPorTipoColegio(tipoColegioProcedencia);
         int numeroCuotas = numeroCuotasSolicitadas > 1 ? Math.min(numeroCuotasSolicitadas, numeroMaxCuotas) : 1;
         double montoCuota = Math.round(montoFinalArancel / numeroCuotas);
@@ -107,7 +106,6 @@ public class CuotaService {
         LocalDate fechaActual = LocalDate.now();
         Date fechaVencimientoMatricula = Date.valueOf(fechaActual);
         Date fechaVencimientoArancel = Date.valueOf(fechaActual.plusMonths(1).withDayOfMonth(10));
-
         Cuota cuotaMatricula = new Cuota();
         cuotaMatricula.setRutEstudiante(rutEstudiante);
         cuotaMatricula.setNumeroDeCuota(0);
@@ -115,7 +113,6 @@ public class CuotaService {
         cuotaMatricula.setFechaDeVencimiento(fechaVencimientoMatricula);
         cuotaMatricula.setEstado(Cuota.EstadoCuota.PENDIENTE);
         cuotasGeneradas.add(cuotaMatricula);
-
         for (int i = 1; i <= numeroCuotas; i++) {
             Cuota cuota = new Cuota();
             cuota.setRutEstudiante(rutEstudiante);
@@ -126,7 +123,48 @@ public class CuotaService {
             cuotasGeneradas.add(cuota);
             fechaVencimientoArancel = Date.valueOf(fechaVencimientoArancel.toLocalDate().plusMonths(1).withDayOfMonth(10));
         }
-
         return cuotaRepository.saveAll(cuotasGeneradas);
+    }
+    public double calcularMontoTotalArancel(String rutEstudiante) {
+        List<Cuota> cuotas = cuotaRepository.findByRutEstudiante(rutEstudiante);
+        return cuotas.stream()
+                .mapToDouble(Cuota::getMonto)
+                .sum();
+    }
+    public String determinarTipoPago(String rutEstudiante) {
+        List<Cuota> cuotas = cuotaRepository.findByRutEstudiante(rutEstudiante);
+        int numeroCuotas = cuotas.size();
+        return numeroCuotas > 1 ? "Cuotas" : "Contado";
+    }
+    public int obtenerTotalCuotasPactadas(String rutEstudiante) {
+        List<Cuota> cuotas = cuotaRepository.findByRutEstudiante(rutEstudiante);
+        return cuotas.size()-1;
+    }
+
+    public int obtenerCuotasPagadas(String rutEstudiante) {
+        return (int) cuotaRepository.findByRutEstudiante(rutEstudiante).stream()
+                .filter(cuota -> cuota.getEstado().equals(Cuota.EstadoCuota.PAGADA) && cuota.getNumeroDeCuota() != 0)
+                .count();
+    }
+    public double obtenerMontoTotalPagado(String rutEstudiante) {
+        return cuotaRepository.findByRutEstudiante(rutEstudiante).stream()
+                .filter(cuota -> cuota.getEstado().equals(Cuota.EstadoCuota.PAGADA) && cuota.getNumeroDeCuota() != 0)
+                .mapToDouble(Cuota::getMonto)
+                .sum();
+    }
+    public int obtenerCuotasConRetraso(String rutEstudiante) {
+        return (int) cuotaRepository.findByRutEstudiante(rutEstudiante).stream()
+                .filter(cuota -> cuota.getEstado().equals(Cuota.EstadoCuota.VENCIDA))
+                .count();
+    }
+    public Date obtenerFechaUltimoPago(String rutEstudiante) {
+        List<Cuota> cuotasPagadas = cuotaRepository.findByRutEstudiante(rutEstudiante).stream()
+                .filter(cuota -> cuota.getEstado().equals(Cuota.EstadoCuota.PAGADA))
+                .collect(Collectors.toList());
+
+        return cuotasPagadas.stream()
+                .max(Comparator.comparing(Cuota::getFechaDePago))
+                .map(Cuota::getFechaDePago)
+                .orElse(null);
     }
 }

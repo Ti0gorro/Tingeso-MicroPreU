@@ -26,6 +26,8 @@ public class Cuota {
 
     @Column(nullable = false)
     private Date fechaDeVencimiento;
+    @Column(nullable = true)
+    private Date fechaDePago;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
