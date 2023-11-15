@@ -134,7 +134,7 @@ public class CuotaService {
     public String determinarTipoPago(String rutEstudiante) {
         List<Cuota> cuotas = cuotaRepository.findByRutEstudiante(rutEstudiante);
         int numeroCuotas = cuotas.size();
-        return numeroCuotas > 1 ? "Cuotas" : "Contado";
+        return numeroCuotas > 2 ? "Cuotas" : "Contado";
     }
     public int obtenerTotalCuotasPactadas(String rutEstudiante) {
         List<Cuota> cuotas = cuotaRepository.findByRutEstudiante(rutEstudiante);

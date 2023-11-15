@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import CuotasManager from './CuotasManager'; 
 import CsvUploader from './CsvUploader';
+import { Link } from 'react-router-dom';
 
 const StudentList = ({ setShowForm }) => {
   const [students, setStudents] = useState([]);
@@ -54,6 +55,7 @@ const StudentList = ({ setShowForm }) => {
                 <td style={tdStyle}>{`${student.nombres} ${student.apellidos}`}</td>
                 <td style={tdStyle}>
                   <CuotasManager rutEstudiante={student.rut} tipoColegio={Number(student.tipoColegioProcedencia)} />
+                  <Link to={`/resumen/${student.rut}`} style={btnStyle}>Ver Resumen</Link>
                 </td>
               </tr>
             ))}
